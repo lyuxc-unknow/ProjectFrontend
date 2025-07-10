@@ -1,0 +1,79 @@
+<script setup>
+import {ref, onMounted, onUnmounted} from 'vue'
+import axios from 'axios'
+
+const tiles = ref([])
+const loading = ref(true)
+const error = ref(null)
+const apiData = async () => {
+  try {
+    loading.value = false
+    // 后端接口为 /api/dashboard
+    const res = await axios.get('/api/dashboard')
+    tiles.value = res.data
+    error.value = null
+  } catch (e) {
+    error.value = '获取数据失败'
+    loading = true
+  }
+}
+
+let timer = null
+
+onMounted(() => {
+  apiData()
+  timer = setInterval(apiData,5000)
+})
+
+onUnmounted(() => {
+  clearInterval(timer)
+})
+</script>
+
+<template>
+  <div>
+    <div v-if="loading">加载中...</div>
+    <div v-else-if="error">{{ error }}</div>
+    <div v-else class="tiles">
+      <div class="tile" v-for="(item, idx) in tiles" :key="idx">
+        <div class="tile-title">{{ item.title }}</div>
+        <div class="tile-value">{{ item.value }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
+}
+.tile {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 24px 32px;
+  min-width: 180px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+.tile-title {
+  font-size: 16px;
+  color: #888;
+  margin-bottom: 8px;
+}
+.tile-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #409EFF;
+}
+.tile:hover {
+  box-shadow: 0 4px 16px rgba(64,158,255,0.15);
+}
+</style>
