@@ -1,9 +1,8 @@
 <script setup>
-import {ref, onMounted, onUnmounted} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
 const tiles = ref([])
-const loading = ref(true)
 const error = ref(null)
 const apiData = async () => {
   try {
@@ -19,10 +18,11 @@ const apiData = async () => {
 }
 
 let timer = null
+let loading = ref(true)
 
 onMounted(() => {
   apiData()
-  timer = setInterval(apiData,5000)
+  timer = setInterval(apiData, 3000)
 })
 
 onUnmounted(() => {
@@ -35,10 +35,12 @@ onUnmounted(() => {
     <div v-if="loading">加载中...</div>
     <div v-else-if="error">{{ error }}</div>
     <div v-else class="tiles">
-      <div class="tile" v-for="(item, idx) in tiles" :key="idx">
-        <div class="tile-title">{{ item.title }}</div>
-        <div class="tile-value">{{ item.value }}</div>
-      </div>
+      <transition-group name="el-fade-in-linear">
+        <div class="tile" v-for="(item, idx) in tiles" :key="idx">
+          <div class="tile-title">{{ item.title }}</div>
+          <div class="tile-value">{{ item.value }}</div>
+        </div>
+      </transition-group>
     </div>
   </div>
 </template>
@@ -50,10 +52,11 @@ onUnmounted(() => {
   gap: 20px;
   margin-top: 20px;
 }
+
 .tile {
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 24px 32px;
   min-width: 180px;
   min-height: 100px;
@@ -63,17 +66,20 @@ onUnmounted(() => {
   align-items: center;
   transition: box-shadow 0.2s;
 }
+
 .tile-title {
   font-size: 16px;
   color: #888;
   margin-bottom: 8px;
 }
+
 .tile-value {
   font-size: 28px;
   font-weight: bold;
   color: #409EFF;
 }
+
 .tile:hover {
-  box-shadow: 0 4px 16px rgba(64,158,255,0.15);
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
 }
 </style>

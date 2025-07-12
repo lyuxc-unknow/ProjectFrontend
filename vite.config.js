@@ -7,14 +7,15 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
     plugins: [
         vue(),
-        vueDevTools(),
+        // vueDevTools(),
+
     ],
     resolve: {
         alias: {
           '@': fileURLToPath(new URL('./src', import.meta.url))
         },
     },
-    server: {
+    server: { 
         proxy: {
             '/api': {
                 target: 'http://localhost:8080',
@@ -22,4 +23,7 @@ export default defineConfig({
             },
         },
     },
+    build: {
+        sourcemap: false
+    }
 })

@@ -1,11 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '../components/Dashboard.vue'
-import Settings from '../components/Settings.vue'
+import Dashboard from '@/components/Dashboard.vue'
+import FprSetting from '@/components/FprSetting.vue'
+import Settings from '@/components/Settings.vue'
+import Login from '@/components/Login.vue'
 
 const routes = [
-  { path: '/', redirect: '/dashboard' },
+  { path: '/', redirect: '/login' },
   { path: '/dashboard', component: Dashboard },
-  { path: '/settings', component: Settings }
+  { path: '/frp', component: FprSetting},
+  { path: '/frp/server', component: FprSetting},
+  { path: '/frp/client', component: FprSetting},
+  { path: '/settings', component: Settings },
+  { path: '/login', component: Login },
 ]
 
 const router = createRouter({
