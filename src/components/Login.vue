@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
@@ -60,7 +60,7 @@ const handleLogin = () => {
                 setTimeout(() => {
                     location.reload()
                 }, 1000);
-        } else {
+            } else {
                 ElMessage.error(message || '登录失败')
             }
         } catch (err) {
@@ -71,6 +71,16 @@ const handleLogin = () => {
         }
     })
 }
+
+onMounted(() => {
+    if (localStorage.getItem('token') !== null) {
+        localStorage.removeItem('token');
+        setTimeout(() => {
+            location.reload();
+        }, 100)
+    }
+}
+)
 </script>
 
 

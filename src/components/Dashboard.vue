@@ -7,12 +7,11 @@ const error = ref(null)
 const apiData = async () => {
   try {
     loading.value = false
-    // 后端接口为 /api/dashboard
     const res = await axios.get('/api/dashboard')
     tiles.value = res.data
     error.value = null
   } catch (e) {
-    error.value = '获取数据失败'
+    error.value = '获取数据失败' + e.value
     loading = true
   }
 }
@@ -21,8 +20,9 @@ let timer = null
 let loading = ref(true)
 
 onMounted(() => {
-  apiData()
-  timer = setInterval(apiData, 3000)
+  // 进入页面时发送一次不用发送一次请求到后端服务器，直接交给定时器处理
+  // apiData()
+  timer = setInterval(apiData, 500)
 })
 
 onUnmounted(() => {

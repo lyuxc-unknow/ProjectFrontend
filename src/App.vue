@@ -6,17 +6,16 @@ const router = useRouter()
 const route = useRoute()
 let isLogin = localStorage.getItem("token") ? true : false
 
-// 让菜单高亮与当前路由同步
+// 菜单高亮同步
 const activeMenu = computed(() => {
   if (route.path.startsWith('/dashboard')) return '1'
-  if (route.path.startsWith("/frp")) return '2'
+  if (route.path.startsWith("/file")) return '2'
   if (route.path.startsWith('/settings')) return '3'
   if (route.path.startsWith('/login')) return '4'
   return '1'
 })
 
 const logout = () => {
-  localStorage.removeItem("token")
   router.push("/login")
   setTimeout(() => {
     location.reload()
@@ -26,7 +25,7 @@ const logout = () => {
 // 菜单点击跳转
 function handleMenuSelect(index) {
   if (index === '1') router.push('/dashboard')
-  if (index === '2') router.push('/frp')
+  if (index === '2') router.push('/file')
   if (index === '3') router.push('/settings')
   if (index === '4') router.push('/login')
 }
@@ -42,7 +41,7 @@ function handleMenuSelect(index) {
         <el-menu :default-active="activeMenu" background-color="#2d3a4b" text-color="#fff" active-text-color="#409EFF"
           @select="handleMenuSelect">
           <el-menu-item index="1"><i class="el-icon-menu"></i> 仪表盘</el-menu-item>
-          <el-menu-item index="2"><i class="el-icon-menu"></i> Frp设置</el-menu-item>
+          <el-menu-item index="2"><i class="el-icon-menu"></i> 文件管理</el-menu-item>
           <el-menu-item index="3"><i class="el-icon-setting"></i> 设置</el-menu-item>
           <el-menu-item index="4" @click="logout"><i class="el-icon-menu"></i> 登出</el-menu-item>
         </el-menu>
