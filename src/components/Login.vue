@@ -47,7 +47,7 @@ const handleLogin = () => {
 
         loading.value = true
         try {
-            const response = await axios.post('/api/login', {
+            const response = await axios.post('/api/auth/login', {
                 username: loginForm.value.username,
                 password: loginForm.value.password
             })
@@ -55,7 +55,7 @@ const handleLogin = () => {
             const { code, message, token } = response.data
             if (code === 200) {
                 ElMessage.success(message || '登录成功')
-                localStorage.setItem('token', token)
+                localStorage.setItem('token', loginForm.value.username + "+" + token)
                 router.push("/dashboard")
                 setTimeout(() => {
                     location.reload()
@@ -71,16 +71,6 @@ const handleLogin = () => {
         }
     })
 }
-
-onMounted(() => {
-    if (localStorage.getItem('token') !== null) {
-        localStorage.removeItem('token');
-        setTimeout(() => {
-            location.reload();
-        }, 100)
-    }
-}
-)
 </script>
 
 

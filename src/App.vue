@@ -1,10 +1,12 @@
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
 import Login from '@/components/Login.vue'
 const router = useRouter()
 const route = useRoute()
-let isLogin = localStorage.getItem("token") ? true : false
+let isLogin = ref(false)
 
 // 菜单高亮同步
 const activeMenu = computed(() => {
@@ -17,6 +19,7 @@ const activeMenu = computed(() => {
 
 const logout = () => {
   router.push("/login")
+  localStorage.removeItem("token")
   setTimeout(() => {
     location.reload()
   }, 100);
@@ -29,6 +32,40 @@ function handleMenuSelect(index) {
   if (index === '3') router.push('/settings')
   if (index === '4') router.push('/login')
 }
+
+onMounted(async () => {
+  const tokenData = localStorage.getItem('token')
+
+  if (!tokenData || !tokenData.includes("+")) {
+    router.push('/login')
+    return
+  }
+
+  const [username, token] = tokenData.split("+")
+
+  if (username && token) {
+    try {
+      const res = await axios.post('/api/auth/verify', {
+        username,
+        token
+      })
+
+      if (res.data.code !== 200) {
+        ElMessage.warning('登录状态已过期，请重新登录')
+        // localStorage.removeItem('token')
+        router.push('/login')
+      } else {
+        isLogin.value = true
+      }
+    } catch (error) {
+      ElMessage.error('验证失败，服务器无响应')
+      console.error(error)
+    }
+  } else {
+    router.push('/login')
+  }
+})
+
 </script>
 
 <template>
