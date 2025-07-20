@@ -7,26 +7,38 @@ interface Tile {
   value: string | number
 }
 
-const tiles = ref<Tile[]>([])
+const hardwareValueTiles = ref<Tile[]>([])
+const filesCountTiles = ref<Tile[]>([])
 const error = ref<string | null>(null)
 const loading = ref<boolean>(true)
 
-const apiData = async (): Promise<void> => {
+const getHardwareValue = async (): Promise<void> => {
   try {
-    loading.value = false
-    const res = await axios.get<Tile[]>('/api/dashboard')
-    tiles.value = res.data
+    const res = await axios.get<Tile[]>('/api/dashboard/getHardwareValue')
+    hardwareValueTiles.value = res.data
     error.value = null
+    loading.value = false
   } catch (e: any) {
     error.value = '获取数据失败' + e.message
-    loading.value = true
+    loading.value = false
+  }
+}
+
+const getFilesCount = async (): Promise<void> => {
+  try {
+    const res = await axios.get<Tile[]>('/api/dashboard/getFilesCount')
+    filesCountTiles.value = res.data
+  } catch (e: any) {
+    console.error('获取文件数量失败:', e.message)
   }
 }
 
 let timer: number | null = null
 
-onMounted(() => {
-  timer = setInterval(apiData, 1500)
+onMounted(async () => {
+  await getFilesCount()
+  await getHardwareValue()
+  timer = setInterval(getHardwareValue, 1500)
 })
 
 onUnmounted(() => {
@@ -42,7 +54,11 @@ onUnmounted(() => {
     <div v-else-if="error">{{ error }}</div>
     <div v-else class="tiles">
       <transition-group name="el-fade-in-linear">
-        <div class="tile" v-for="(item, idx) in tiles" :key="idx">
+        <div class="tile" v-for="(item, idx) in hardwareValueTiles" :key="idx">
+          <div class="tile-title">{{ item.title }}</div>
+          <div class="tile-value">{{ item.value }}</div>
+        </div>
+        <div class="tile" v-for="(item, idx) in filesCountTiles" :key="idx">
           <div class="tile-title">{{ item.title }}</div>
           <div class="tile-value">{{ item.value }}</div>
         </div>
