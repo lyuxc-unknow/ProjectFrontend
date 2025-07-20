@@ -1,8 +1,3 @@
-<template>
-    <!-- <div>这里是设置页面</div> -->
-    <el-button type="warning" @click="initDatabase">初始化数据库</el-button>
-</template>
-
 <script setup lang="ts">
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
@@ -27,3 +22,8 @@ const initDatabase = async (): Promise<void> => {
   }
 }
 </script>
+
+<template>
+    <!-- <div>这里是设置页面</div> -->
+    <el-button type="warning" @click="initDatabase">初始化数据库</el-button>
+</template>

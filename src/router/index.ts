@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Dashboard from '@/components/Dashboard.vue'
 import FileDownloadAndUpload from '@/components/Files.vue'
 import Settings from '@/components/Settings.vue'
-// import Login from '@/components/Login.vue'
+import Lottery from '@/components/Lottery.vue'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
@@ -11,8 +11,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/file/download', component: FileDownloadAndUpload },
   { path: '/file/upload', component: FileDownloadAndUpload },
   { path: '/settings', component: Settings },
-  // 禁止嵌入login页
-  // { path: '/login', component: Login },
+  { path: '/lottery', component: Lottery },
 ]
 
 const router = createRouter({

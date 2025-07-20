@@ -18,8 +18,9 @@ interface VerifyResponse {
 const activeMenu = computed((): string => {
   if (route.path.startsWith('/dashboard')) return '1'
   if (route.path.startsWith("/file")) return '2'
-  if (route.path.startsWith('/settings')) return '3'
-  if (route.path.startsWith('/login')) return '4'
+  if (route.path.startsWith("/lottery")) return '3'
+  if (route.path.startsWith('/settings')) return '4'
+  if (route.path.startsWith('/login')) return '5'
   return '1'
 })
 
@@ -35,8 +36,9 @@ const logout = (): void => {
 function handleMenuSelect(index: string): void {
   if (index === '1') router.push('/dashboard')
   if (index === '2') router.push('/file')
-  if (index === '3') router.push('/settings')
-  if (index === '4') router.push('/login')
+  if (index === '3') router.push('/lottery')
+  if (index === '4') router.push('/settings')
+  if (index === '5') router.push('/login')
 }
 
 onMounted(async (): Promise<void> => {
@@ -81,15 +83,18 @@ onMounted(async (): Promise<void> => {
       <el-aside width="200px" class="aside">
         <el-menu :default-active="activeMenu" background-color="#2d3a4b" text-color="#fff" active-text-color="#409EFF"
           @select="handleMenuSelect">
-          <el-menu-item index="1"><i class="el-icon-menu"></i> 仪表盘</el-menu-item>
-          <el-menu-item index="2"><i class="el-icon-menu"></i> 文件管理</el-menu-item>
-          <el-menu-item index="3"><i class="el-icon-setting"></i> 设置</el-menu-item>
-          <el-menu-item index="4" @click="logout"><i class="el-icon-menu"></i> 登出</el-menu-item>
+          <el-menu-item index="1"><i class="el-icon-menu"></i>仪表盘</el-menu-item>
+          <el-menu-item index="2"><i class="el-icon-menu"></i>文件管理</el-menu-item>
+          <el-menu-item index="3"><i class="el-icon-menu"></i>抽奖</el-menu-item>
+          <el-menu-item index="4"><i class="el-icon-setting"></i>设置</el-menu-item>
+          <el-menu-item index="5" @click="logout"><i class="el-icon-menu"></i>登出</el-menu-item>
         </el-menu>
       </el-aside>
       <el-container class="main-container">
         <el-main class="main">
-          <router-view />
+          <el-watermark style="height: 100%;width: 100%;" content="testing">
+            <router-view />
+          </el-watermark>
         </el-main>
         <el-footer class="footer">
           <div class="footer-content">

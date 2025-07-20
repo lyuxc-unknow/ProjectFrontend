@@ -1,22 +1,3 @@
-<template>
-    <div class="login-container">
-        <el-card class="login-card">
-            <h2 class="login-title">欢迎登录</h2>
-            <el-form :model="loginForm" :rules="rules" ref="loginRef" label-width="80px">
-                <el-form-item label="用户名" prop="username">
-                    <el-input v-model="loginForm.username" placeholder="请输入用户名" />
-                </el-form-item>
-                <el-form-item label="密码" prop="password">
-                    <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password />
-                </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" @click="handleLogin" :loading="loading">登录</el-button>
-                </el-form-item>
-            </el-form>
-        </el-card>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
@@ -84,6 +65,24 @@ const handleLogin = (): void => {
 }
 </script>
 
+<template>
+    <div class="login-container">
+        <el-card class="login-card">
+            <h2 class="login-title">欢迎登录</h2>
+            <el-form :model="loginForm" :rules="rules" ref="loginRef" label-width="80px">
+                <el-form-item label="用户名" prop="username">
+                    <el-input v-model="loginForm.username" placeholder="请输入用户名" />
+                </el-form-item>
+                <el-form-item label="密码" prop="password">
+                    <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="handleLogin" :loading="loading">登录</el-button>
+                </el-form-item>
+            </el-form>
+        </el-card>
+    </div>
+</template>
 
 <style scoped>
 .login-container {
