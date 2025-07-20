@@ -1,15 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import Login from '@/components/Login.vue'
+
 const router = useRouter()
 const route = useRoute()
-let isLogin = ref(false)
+const isLogin = ref<boolean>(false)
+
+interface VerifyResponse {
+  code: number
+  message: string
+}
 
 // 菜单高亮同步
-const activeMenu = computed(() => {
+const activeMenu = computed((): string => {
   if (route.path.startsWith('/dashboard')) return '1'
   if (route.path.startsWith("/file")) return '2'
   if (route.path.startsWith('/settings')) return '3'
@@ -17,7 +23,7 @@ const activeMenu = computed(() => {
   return '1'
 })
 
-const logout = () => {
+const logout = (): void => {
   router.push("/login")
   localStorage.removeItem("token")
   setTimeout(() => {
@@ -26,14 +32,14 @@ const logout = () => {
 }
 
 // 菜单点击跳转
-function handleMenuSelect(index) {
+function handleMenuSelect(index: string): void {
   if (index === '1') router.push('/dashboard')
   if (index === '2') router.push('/file')
   if (index === '3') router.push('/settings')
   if (index === '4') router.push('/login')
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
   const tokenData = localStorage.getItem('token')
 
   if (!tokenData || !tokenData.includes("+")) {
@@ -45,19 +51,18 @@ onMounted(async () => {
 
   if (username && token) {
     try {
-      const res = await axios.post('/api/auth/verify', {
+      const res = await axios.post<VerifyResponse>('/api/auth/verify', {
         username,
         token
       })
 
       if (res.data.code !== 200) {
         ElMessage.warning('登录状态已过期，请重新登录')
-        // localStorage.removeItem('token')
         router.push('/login')
       } else {
         isLogin.value = true
       }
-    } catch (error) {
+    } catch (error: any) {
       ElMessage.error('验证失败，服务器无响应')
       console.error(error)
     }
@@ -65,7 +70,6 @@ onMounted(async () => {
     router.push('/login')
   }
 })
-
 </script>
 
 <template>

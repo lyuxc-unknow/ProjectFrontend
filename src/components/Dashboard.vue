@@ -1,32 +1,38 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
-const tiles = ref([])
-const error = ref(null)
-const apiData = async () => {
+interface Tile {
+  title: string
+  value: string | number
+}
+
+const tiles = ref<Tile[]>([])
+const error = ref<string | null>(null)
+const loading = ref<boolean>(true)
+
+const apiData = async (): Promise<void> => {
   try {
     loading.value = false
-    const res = await axios.get('/api/dashboard')
+    const res = await axios.get<Tile[]>('/api/dashboard')
     tiles.value = res.data
     error.value = null
-  } catch (e) {
-    error.value = '获取数据失败' + e.value
-    loading = true
+  } catch (e: any) {
+    error.value = '获取数据失败' + e.message
+    loading.value = true
   }
 }
 
-let timer = null
-let loading = ref(true)
+let timer: number | null = null
 
 onMounted(() => {
-  // 进入页面时发送一次不用发送一次请求到后端服务器，直接交给定时器处理
-  // apiData()
-  timer = setInterval(apiData, 500)
+  timer = setInterval(apiData, 1500)
 })
 
 onUnmounted(() => {
-  clearInterval(timer)
+  if (timer) {
+    clearInterval(timer)
+  }
 })
 </script>
 

@@ -13,17 +13,21 @@
   </el-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-const fileList = ref([])
+interface FileListResponse {
+  files: string[]
+}
 
-onMounted(async () => {
+const fileList = ref<string[]>([])
+
+onMounted(async (): Promise<void> => {
   try {
-    const res = await axios.get('/api/file/getFiles')
+    const res = await axios.get<FileListResponse>('/api/file/getFiles')
     fileList.value = res.data.files || []
-  } catch (err) {
+  } catch (err: any) {
     console.error('获取文件列表失败', err)
   }
 })

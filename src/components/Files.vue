@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import FileUploadPage from './file/FileUpload.vue'
 import FileDownloadPage from './file/FileDonwload.vue'
 
-const currentComponent = ref('download')
+const currentComponent = ref<'download' | 'upload'>('download')
 
-const switchToDownloadPage = () => {
+const switchToDownloadPage = (): void => {
     currentComponent.value = 'download'
 }
 
-const switchToUploadPage = () => {
+const switchToUploadPage = (): void => {
     currentComponent.value = 'upload'
 }
 </script>

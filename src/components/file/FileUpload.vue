@@ -14,19 +14,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ElMessage } from 'element-plus'
+import type { UploadProps, UploadUserFile } from 'element-plus'
 
 // 鉴权改进:传入token
-const headers = {
+const headers: Record<string, string> = {
   // Authorization: `Bearer ${localStorage.getItem('token')}`
 }
 
-const handleSuccess = (response, file) => {
+const handleSuccess: UploadProps['onSuccess'] = (response: any, file: UploadUserFile) => {
   ElMessage.success(`${file.name} 上传成功`)
 }
 
-const handleError = (error, file) => {
+const handleError: UploadProps['onError'] = (error: any, file: UploadUserFile) => {
   ElMessage.error(`${file.name} 上传失败`)
 }
 </script>

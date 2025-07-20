@@ -17,29 +17,40 @@
     </div>
 </template>
 
-<script setup>
-import { onMounted, ref } from 'vue'
+<script setup lang="ts">
+import { ref } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
+import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
-const route = useRoute()
-const loginRef = ref(null)
-const loading = ref(false)
+const loginRef = ref<FormInstance | null>(null)
+const loading = ref<boolean>(false)
 
-const loginForm = ref({
+interface LoginForm {
+    username: string
+    password: string
+}
+
+interface LoginResponse {
+    code: number
+    message: string
+    token?: string
+}
+
+const loginForm = ref<LoginForm>({
     username: '',
     password: ''
 })
 
-const rules = {
+const rules: FormRules = {
     username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
     password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-const handleLogin = () => {
-    loginRef.value.validate(async (valid) => {
+const handleLogin = (): void => {
+    loginRef.value?.validate(async (valid: boolean) => {
         if (!valid) {
             ElMessage.error('请填写完整信息')
             return
@@ -47,7 +58,7 @@ const handleLogin = () => {
 
         loading.value = true
         try {
-            const response = await axios.post('/api/auth/login', {
+            const response = await axios.post<LoginResponse>('/api/auth/login', {
                 username: loginForm.value.username,
                 password: loginForm.value.password
             })
@@ -63,7 +74,7 @@ const handleLogin = () => {
             } else {
                 ElMessage.error(message || '登录失败')
             }
-        } catch (err) {
+        } catch (err: any) {
             ElMessage.error('网络或服务器错误')
             console.error(err)
         } finally {
