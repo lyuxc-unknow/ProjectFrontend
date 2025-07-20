@@ -11,17 +11,16 @@
   },
   "dependencies": {
     "axios": "^1.10.0",
-    "element-plus": "^2.10.3",
+    "element-plus": "^2.10.4",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@vitejs/plugin-vue": "^6.0.0",
-    "@vue/tsconfig": "^0.7.1",
-    "typescript": "^5.6.3",
-    "vite": "^7.0.0",
-    "vite-plugin-vue-devtools": "^7.7.7",
-    "vue-tsc": "^2.2.8"
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.5",
+    "vue-tsc": "^3.0.3"
   }
 }
