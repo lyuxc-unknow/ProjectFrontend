@@ -19,8 +19,9 @@ const activeMenu = computed((): string => {
   if (route.path.startsWith('/dashboard')) return '1'
   if (route.path.startsWith("/file")) return '2'
   if (route.path.startsWith("/lottery")) return '3'
-  if (route.path.startsWith('/settings')) return '4'
-  if (route.path.startsWith('/login')) return '5'
+  if (route.path.startsWith("/todolist")) return '4'
+  if (route.path.startsWith('/settings')) return '5'
+  if (route.path.startsWith('/login')) return '6'
   return '1'
 })
 
@@ -37,8 +38,9 @@ function handleMenuSelect(index: string): void {
   if (index === '1') router.push('/dashboard')
   if (index === '2') router.push('/file')
   if (index === '3') router.push('/lottery')
-  if (index === '4') router.push('/settings')
-  if (index === '5') router.push('/login')
+  if (index === '4') router.push('/todolist')
+  if (index === '5') router.push('/settings')
+  if (index === '6') router.push('/login')
 }
 
 onMounted(async (): Promise<void> => {
@@ -86,8 +88,9 @@ onMounted(async (): Promise<void> => {
           <el-menu-item index="1"><i class="el-icon-menu"></i>仪表盘</el-menu-item>
           <el-menu-item index="2"><i class="el-icon-menu"></i>文件管理</el-menu-item>
           <el-menu-item index="3"><i class="el-icon-menu"></i>抽奖</el-menu-item>
-          <el-menu-item index="4"><i class="el-icon-setting"></i>设置</el-menu-item>
-          <el-menu-item index="5" @click="logout"><i class="el-icon-menu"></i>登出</el-menu-item>
+          <el-menu-item index="4"><i class="el-icon-menu"></i>待办事项</el-menu-item>
+          <el-menu-item index="5"><i class="el-icon-setting"></i>设置</el-menu-item>
+          <el-menu-item index="6" @click="logout"><i class="el-icon-menu"></i>登出</el-menu-item>
         </el-menu>
       </el-aside>
       <el-container class="main-container">

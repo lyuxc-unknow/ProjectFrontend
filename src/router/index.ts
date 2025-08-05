@@ -3,6 +3,7 @@ import Dashboard from '@/components/Dashboard.vue'
 import FileDownloadAndUpload from '@/components/Files.vue'
 import Settings from '@/components/Settings.vue'
 import Lottery from '@/components/Lottery.vue'
+import TodoList from '@/components/TodoList.vue'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
@@ -12,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/file/upload', component: FileDownloadAndUpload },
   { path: '/settings', component: Settings },
   { path: '/lottery', component: Lottery },
+  { path: '/todolist', component: TodoList },
 ]
 
 const router = createRouter({

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import Lottery from './lottery/Lottery.vue'
+import Lottery from './lottery/LotteryMachine.vue'
 import SetupLottery from './lottery/LotteryManager.vue'
 
 const currentComponent = ref<'getLottery' | 'setupLottery'>('getLottery')
