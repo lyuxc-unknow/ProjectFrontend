@@ -155,7 +155,7 @@ body,
 
 .footer {
   background: #f0f2f5;
-  height: 40px; /* 调大高度防止在正式部署时出现高度问题 */
+  height: 40px;
   display: flex;
   align-items: center;
   text-align: center;

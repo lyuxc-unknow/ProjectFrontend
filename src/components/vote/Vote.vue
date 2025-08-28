@@ -29,9 +29,9 @@
       </el-card>
     </div>
 
-    <div style="">
+    <div>
       <!-- 3️⃣ 投票结果 -->
-      <el-card v-if="voted && poll?.options?.length" shadow="hover">
+      <el-card v-if="voted && poll?.options && poll?.options.length">
         <h3 class="font-bold mb-2">投票结果：</h3>
         <div v-for="option in poll?.options ?? []" :key="option.id ?? option.optionText" class="flex items-center mb-2">
           <div style="display: flex;flex-direction: row;">
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 // 保存 voterId
 const voterId = localStorage.getItem('voterId') || `user-${Date.now()}`
@@ -115,6 +116,12 @@ const submitVote = async () => {
     )
     poll.value = res.data
     voted.value = true
+    ElMessage({
+    message: '投票成功',
+    type: 'success',
+    duration: 500,
+    showClose: false, // 是否显示关闭按钮
+  })
   } catch (e: any) {
     console.error('投票失败', e)
     alert('投票失败')
