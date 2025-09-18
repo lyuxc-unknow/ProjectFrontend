@@ -1,0 +1,1343 @@
+<template>
+  <div class="attendance-container">
+    <el-card class="header-card">
+      <div class="header">
+        <h2>学生请假管理系统</h2>
+        <div class="date-selector">
+          <el-date-picker
+            v-model="selectedWeek"
+            type="date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            placeholder="选择日期"
+            @change="handleWeekChange"
+          />
+          <el-button type="primary" @click="showDbManagementDialog">
+            <el-icon><UploadFilled /></el-icon>
+            数据库管理
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
+    <el-row :gutter="20" class="attendance-row">
+      <!-- 左边班级列表 -->
+      <el-col :span="6">
+        <el-card class="class-card">
+          <template #header>
+            <div class="card-header">
+              <span>班级列表</span>
+              <!-- 左上角四个按钮 -->
+              <div class="header-actions">
+                <el-button
+                  type="success"
+                  size="small"
+                  @click="showAddClassDialog"
+                  class="action-btn"
+                >
+                  <el-icon><Plus /></el-icon>
+                  添加班级
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="showDeleteClassDialog"
+                  :disabled="selectedClassIds.length === 0"
+                  class="action-btn"
+                >
+                  <el-icon><Delete /></el-icon>
+                  删除班级
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="refreshClasses"
+                  class="action-btn"
+                >
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+                <el-button
+                  type="info"
+                  size="small"
+                  @click="exportAllAttendance"
+                  class="action-btn"
+                >
+                  <el-icon><Download /></el-icon>
+                  导出全部
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="exportProblemSummaryAll"
+                  class="action-btn"
+                >
+                  <el-icon><Download /></el-icon>
+                  导出全部(外部)
+                </el-button>
+              </div>
+            </div>
+          </template>
+          <!-- 左边从后端获取的班级列表 -->
+          <div class="class-list">
+            <div
+              v-for="classItem in classes"
+              :key="classItem.id"
+              class="class-item"
+              :class="{
+                active: selectedClass?.id === classItem.id,
+                selected: selectedClassIds.includes(classItem.id),
+              }"
+              @click="selectClass(classItem)"
+              @contextmenu.prevent="toggleClassSelection(classItem.id)"
+            >
+              <div class="class-item-header">
+                <el-checkbox
+                  :model-value="selectedClassIds.includes(classItem.id)"
+                  @change="toggleClassSelection(classItem.id)"
+                  @click.stop
+                />
+                <div class="class-name">{{ classItem.name }}</div>
+              </div>
+              <div class="class-info">
+                <span>学生数: {{ classItem.studentCount }}</span>
+                <span style="margin-left: 10px;">班主任: {{ classItem.headTeacher }}</span>
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 右边选择班级后展开的考勤情况 -->
+      <el-col :span="18">
+        <el-card v-if="selectedClass" class="attendance-card">
+          <template #header>
+            <div class="card-header">
+              <span>{{ selectedClass.name }} - 请假管理</span>
+              <!-- N个按钮 -->
+              <div class="header-actions">
+                <el-button
+                  type="warning"
+                  size="small"
+                  @click="showAddStudentDialog"
+                  class="action-btn"
+                >
+                  <el-icon><User /></el-icon>
+                  新增学生
+                </el-button>
+                <el-button
+                  type="success"
+                  size="small"
+                  @click="showImportStudentsDialog"
+                  class="action-btn"
+                >
+                  <el-icon><Upload /></el-icon>
+                  导入学生
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="showDeleteStudentDialog"
+                  :disabled="selectedStudentIds.length === 0"
+                  class="action-btn"
+                >
+                  <el-icon><Delete /></el-icon>
+                  删除学生
+                </el-button>
+                <el-button
+                  type="info"
+                  size="small"
+                  @click="exportAttendance"
+                  class="action-btn"
+                >
+                  <el-icon><Download /></el-icon>
+                  导出
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="exportProblemSummary"
+                  class="action-btn"
+                >
+                  <el-icon><Download /></el-icon>
+                  导出(外部)
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="batchUpdate"
+                  class="action-btn"
+                  :disabled="attendanceData.length === 0"
+                >
+                  <el-icon><Edit /></el-icon>
+                  批量修改
+                </el-button>
+              </div>
+            </div>
+          </template>
+          <div class="attendance-content">
+            <!-- 课程时间表 -->
+            <div class="schedule-table">
+              <el-scrollbar class="table-wrapper" :wrap-style="{ overflowX: 'hidden' }" :max-height="'calc(100vh - 300px)'">
+                <el-table
+                  ref="tableRef"
+                  :data="attendanceData"
+                  border
+                  style="width: 100%"
+                  :loading="loading"
+                  @selection-change="handleStudentSelectionChange"
+                >
+                  <el-table-column type="selection" width="55" fixed="left" />
+                  <el-table-column
+                    prop="studentId"
+                    label="学号"
+                    width="100"
+                    fixed="left"
+                  />
+                  <el-table-column
+                    prop="studentName"
+                    label="学生姓名"
+                    width="100"
+                    fixed="left"
+                  />
+
+                  <!-- 动态生成课程时间列 -->
+                  <el-table-column v-for="day in weekDays" :key="day.date" align="center">
+                    <template #header>
+                      <div class="day-header">
+                        <div class="day-name">{{ day.dayName }}</div>
+                        <div class="day-date">{{ day.dateDisplay }}</div>
+                      </div>
+                    </template>
+                    <el-table-column
+                      v-for="period in timePeriods"
+                      :key="`${day.date}-${period.id}`"
+                      :label="period.name"
+                      width="120"
+                      align="center"
+                    >
+                      <template #default="{ row }">
+                        <div style="display: flex; gap: 6px; align-items: center; justify-content: center;">
+                          <el-select
+                            :model-value="
+                              getMergedAttendanceStatus(row, day.date, period.id)
+                            "
+                            size="small"
+                            @change="updateAttendance(row, day.date, period.id, $event)"
+                          >
+                            <el-option
+                              v-for="status in attendanceStatuses"
+                              :key="status.value"
+                              :label="status.label"
+                              :value="status.value"
+                              :style="{ color: status.color }"
+                            />
+                          </el-select>
+                          <el-button
+                            link
+                            type="primary"
+                            size="small"
+                            @click="openRemark(row, day.date, period.id)"
+                          >备注</el-button>
+                        </div>
+                      </template>
+                    </el-table-column>
+                  </el-table-column>
+                </el-table>
+              </el-scrollbar>
+
+              <!-- 分页组件 -->
+              <div class="pagination-container">
+                <el-pagination
+                  v-model:current-page="currentPage"
+                  :page-size="pageSize"
+                  :total="totalStudents"
+                  :page-sizes="[6, 8, 10, 12]"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                  :loading="loading"
+                />
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <el-empty v-else description="请先选择一个班级" />
+      </el-col>
+    </el-row>
+
+    <!-- 新增班级对话框 -->
+    <el-dialog v-model="addClassDialogVisible" title="新增班级" width="400px">
+      <el-form
+        :model="addClassForm"
+        :rules="addClassRules"
+        ref="addClassFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="班级名称" prop="name">
+          <el-input v-model="addClassForm.name" placeholder="请输入班级名称" />
+        </el-form-item>
+        <el-form-item label="班主任名称" prop="headTeacher">
+          <el-input v-model="addClassForm.headTeacher" placeholder="请输入班主任名称" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addClassDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddClass">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增学生对话框 -->
+    <el-dialog v-model="addStudentDialogVisible" title="新增学生" width="600px">
+      <el-form
+        :model="addStudentForm"
+        :rules="addStudentRules"
+        ref="addStudentFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="学号" prop="studentId">
+          <el-input v-model="addStudentForm.studentId" placeholder="请输入学号" />
+        </el-form-item>
+        <el-form-item label="姓名" prop="name">
+          <el-input v-model="addStudentForm.name" placeholder="请输入学生姓名" />
+        </el-form-item>
+        <el-form-item label="班级">
+          <el-input :value="selectedClass?.name" disabled />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addStudentDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddStudent">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 导入学生对话框 -->
+    <el-dialog v-model="importStudentsDialogVisible" title="批量导入学生" width="600px">
+      <el-form :model="importStudentsForm" label-width="100px">
+        <el-form-item label="目标班级">
+          <el-input :value="selectedClass?.name" disabled />
+        </el-form-item>
+        <el-form-item label="学生姓名">
+          <el-input
+            v-model="importStudentsForm.rawText"
+            type="textarea"
+            :rows="12"
+            placeholder="每行一个名字，例如: 
+张三
+李四
+王五"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="importStudentsDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmImportStudents">开始导入</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 删除班级对话框 -->
+    <el-dialog v-model="deleteClassDialogVisible" title="删除班级" width="500px">
+      <div class="delete-warning">
+        <el-icon class="warning-icon"><Warning /></el-icon>
+        <div class="warning-content">
+          <h4>确认删除选中的班级吗？</h4>
+          <p>此操作将同时删除：</p>
+          <ul>
+            <li>选中的 {{ selectedClassIds.length }} 个班级</li>
+            <li>这些班级下的所有学生</li>
+            <li>所有相关的考勤记录</li>
+          </ul>
+          <p class="danger-text">此操作不可恢复！</p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="deleteClassDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="confirmDeleteClasses">确定删除</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 删除学生对话框 -->
+    <el-dialog v-model="deleteStudentDialogVisible" title="删除学生" width="500px">
+      <div class="delete-warning">
+        <el-icon class="warning-icon"><Warning /></el-icon>
+        <div class="warning-content">
+          <h4>确认删除选中的学生吗？</h4>
+          <p>此操作将同时删除：</p>
+          <ul>
+            <li>选中的 {{ selectedStudentIds.length }} 名学生</li>
+            <li>这些学生的所有考勤记录</li>
+          </ul>
+          <p class="danger-text">此操作不可恢复！</p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="deleteStudentDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="confirmDeleteStudents">确定删除</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量修改对话框 -->
+    <el-dialog v-model="batchDialogVisible" title="批量修改请假状态" width="600px">
+      <el-form :model="batchForm" label-width="100px">
+        <el-form-item label="选择学生">
+          <el-select
+            v-model="batchForm.studentIds"
+            multiple
+            placeholder="选择要修改的学生"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="student in attendanceData"
+              :key="student.studentId"
+              :label="student.studentName"
+              :value="student.studentId"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="选择时间">
+          <el-date-picker
+            v-model="batchForm.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+        <el-form-item label="选择课程">
+          <el-select
+            v-model="batchForm.periods"
+            multiple
+            placeholder="选择课程时段"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="period in timePeriods"
+              :key="period.id"
+              :label="period.name"
+              :value="period.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="请假状态">
+          <el-select v-model="batchForm.status" placeholder="选择请假状态">
+            <el-option
+              v-for="status in attendanceStatuses"
+              :key="status.value"
+              :label="status.label"
+              :value="status.value"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmBatchUpdate">确定</el-button>
+      </template>
+    </el-dialog>
+    <!-- 备注对话框 -->
+    <el-dialog v-model="remarkDialogVisible" title="备注" width="500px">
+      <el-input
+        v-model="remarkForm.text"
+        type="textarea"
+        :rows="8"
+        placeholder="请输入备注"
+      />
+      <template #footer>
+        <el-button @click="remarkDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveRemark">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 数据库管理对话框 -->
+    <el-dialog v-model="dbManagementDialogVisible" title="数据库管理" width="500px">
+      <div class="db-management-dialog">
+        <div class="db-options">
+          <el-button
+            type="primary"
+            size="large"
+            class="db-option-btn"
+            @click="downloadDatabase"
+          >
+            <el-icon><Download /></el-icon>
+            下载数据库备份
+          </el-button>
+          <div class="import-section">
+            <el-button
+              type="success"
+              size="large"
+              class="db-option-btn"
+              @click="uploadDatabase"
+            >
+              <el-icon><Upload /></el-icon>
+              上传数据库备份
+            </el-button>
+            <input
+              ref="dbFileInputRef"
+              type="file"
+              accept=".db"
+              style="display: none"
+              @change="handleDatabaseUpload"
+            />
+            <div class="import-tip">
+              请选择 .db 格式的数据库文件
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="dbManagementDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed } from "vue";
+import { ElMessage } from "element-plus";
+import {
+  Refresh,
+  Download,
+  Edit,
+  Plus,
+  User,
+  Delete,
+  Warning,
+  Upload,
+  UploadFilled,
+} from "@element-plus/icons-vue";
+import { AttendanceApi } from "@/api/attendance";
+import { addClassRules, addStudentRules } from "@/rules/Attendance";
+import "./Attendance.css";
+import type { ClassInfo, Student, WeekDay } from "@/types/attendance";
+import { attendanceStatuses, timePeriods, backendFieldMapping } from "@/constants/attendance";
+import { debounce } from "@/utils/attendance/debounce";
+import { dataProcessor } from "@/utils/attendance/dataProcessor";
+
+// ----------------------- 接口类型定义 ------------------------------ //
+// 类型已迁移至 `src/types/attendance.ts`
+
+// 响应式数据
+// 加载中
+const loading = ref(false);
+// 选择的周
+const selectedWeek = ref("");
+// 选择的班级
+const selectedClass = ref<ClassInfo | null>(null);
+// 所有班级列表
+const classes = ref<ClassInfo[]>([]);
+// 学生考情状态
+const attendanceData = ref<Student[]>([]);
+// 批量修改对话框是否可见
+const batchDialogVisible = ref(false);
+// 添加班级对话框是否可见
+const addClassDialogVisible = ref(false);
+// 添加学生对话框是否可见
+const addStudentDialogVisible = ref(false);
+// 导入学生对话框是否可见
+const importStudentsDialogVisible = ref(false);
+// 删除班级对话框是否可见
+const deleteClassDialogVisible = ref(false);
+// 删除学生对话框是否可见
+const deleteStudentDialogVisible = ref(false);
+// 数据库管理对话框是否可见
+const dbManagementDialogVisible = ref(false);
+// 数据库文件上传引用
+const dbFileInputRef = ref();
+// 选择的班级ID列表
+const selectedClassIds = ref<number[]>([]);
+// 选择的学生ID列表
+const selectedStudentIds = ref<string[]>([]);
+
+const updateQueue = ref<
+  Map<string, { student: Student; date: string; fields: string[]; status: string }>
+>(new Map());
+
+// 分页相关
+// 默认每页加载10个学生
+const pageSize = ref(10);
+// 默认处于第一页
+const currentPage = ref(1);
+// 当前学生总数
+const totalStudents = ref(0);
+// 当前总学生页数
+const totalPages = ref(0);
+
+// 使用 dataProcessor 中的数据处理函数
+
+// 使用 dataProcessor 中的 getBackendFieldName 函数
+
+// 表单引用
+const addClassFormRef = ref();
+const addStudentFormRef = ref();
+const tableRef = ref<any>();
+
+// 备注编辑
+const remarkDialogVisible = ref(false);
+const remarkForm = reactive({
+  studentId: "",
+  classId: 0 as number,
+  field: "",
+  date: "",
+  text: "",
+});
+
+const openRemark = async (student: Student, date: string, period: string) => {
+  const backendField = dataProcessor.getBackendFieldName(date, period, weekDays.value);
+  if (!backendField || !selectedClass.value) return;
+
+  remarkForm.studentId = student.studentId;
+  remarkForm.classId = selectedClass.value.id;
+  remarkForm.field = backendField;
+  remarkForm.date = date;
+  remarkForm.text = "";
+  try {
+    const resp = await AttendanceApi.getRemark({
+      studentId: remarkForm.studentId,
+      classId: remarkForm.classId,
+      week: selectedWeek.value,
+      field: remarkForm.field,
+    });
+    remarkForm.text = resp.data?.data?.remark || "";
+  } catch (e) {
+    console.error(e);
+  }
+  remarkDialogVisible.value = true;
+};
+
+const saveRemark = async () => {
+  try {
+    await AttendanceApi.saveRemark({
+      studentId: remarkForm.studentId,
+      classId: remarkForm.classId,
+      week: selectedWeek.value,
+      field: remarkForm.field,
+      remark: remarkForm.text,
+    });
+    ElMessage.success("备注已保存");
+    remarkDialogVisible.value = false;
+  } catch (e) {
+    ElMessage.error("保存备注失败");
+    console.error(e);
+  }
+};
+// 常量迁移至 `src/constants/attendance.ts`
+
+// 批量修改表单
+const batchForm = reactive({
+  studentIds: [] as string[],
+  dateRange: [] as string[],
+  periods: [] as string[],
+  status: "",
+});
+
+// 新增班级表单
+const addClassForm = reactive({
+  name: "",
+  headTeacher: ""
+});
+
+// 新增学生表单
+const addStudentForm = reactive({
+  studentId: "",
+  name: "",
+});
+
+// 导入学生表单
+const importStudentsForm = reactive({
+  rawText: "",
+});
+
+// 计算属性：当前周的日期
+const weekDays = computed((): WeekDay[] => {
+  if (!selectedWeek.value) return [];
+
+  const selectedDate = new Date(selectedWeek.value);
+  // 计算选中日期所在周的周一
+  const dayOfWeek = selectedDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 周日是0，需要-6；周一是1，需要0
+  const startDate = new Date(selectedDate);
+  startDate.setDate(selectedDate.getDate() + mondayOffset);
+
+  const days: WeekDay[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    const dateStr = date.toISOString().split("T")[0];
+    const dayNames = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    days.push({
+      date: dateStr,
+      label: `${dayNames[i]}<br/>${date.getMonth() + 1}/${date.getDate()}`,
+      dayName: dayNames[i],
+      dateDisplay: `${date.getMonth() + 1}/${date.getDate()}`,
+    });
+  }
+
+  return days;
+});
+
+// 获取课程考勤状态（原子节次）
+const getMergedAttendanceStatus = (
+  student: Student,
+  date: string,
+  period: string
+): string => {
+  // 增加保护，如果 attendance 对象不存在，则返回 'normal'
+  if (!student.attendance) {
+    return "normal";
+  }
+  return student.attendance[`${date}-${period}`] || "normal";
+};
+
+// 刷新班级方法
+const refreshClasses = async () => {
+  try {
+    loading.value = true;
+    const response = await AttendanceApi.getClasses();
+    classes.value = response.data.data;
+  } catch (error) {
+    ElMessage.error("获取班级列表失败");
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 选择班级方法
+const selectClass = async (classItem: ClassInfo) => {
+  if (selectedClass.value?.id !== classItem.id) {
+    selectedClass.value = classItem;
+    // 清除旧班级的UI数据，以提供即时反馈
+    attendanceData.value = [];
+    // 重置分页到第一页
+    currentPage.value = 1;
+    await loadAttendanceData();
+  } else {
+    // 如果点击的是当前已选中的班级，则强制刷新数据
+    currentPage.value = 1;
+    await loadAttendanceData();
+  }
+};
+
+// 分页处理函数
+const handleSizeChange = (newSize: number) => {
+  pageSize.value = newSize;
+  currentPage.value = 1;
+  loadAttendanceData();
+};
+
+// 处理当前更改
+const handleCurrentChange = (newPage: number) => {
+  currentPage.value = newPage;
+  loadAttendanceData();
+};
+
+// 加载考勤数据
+const loadAttendanceData = async () => {
+  if (!selectedClass.value || !selectedWeek.value) return;
+
+  const classId = selectedClass.value.id;
+  const week = selectedWeek.value;
+
+  loading.value = true;
+
+  // 从服务器获取数据
+  await fetchLatestData(classId, week);
+};
+
+// 获取最新数据
+const fetchLatestData = async (classId: number, week: string) => {
+  try {
+    const response = await AttendanceApi.getStudents({
+      classId,
+      week,
+      page: currentPage.value,
+      pageSize: pageSize.value,
+    });
+
+    // 检查响应数据结构 - 根据实际返回格式调整
+    let studentsData = [];
+    let total = 0;
+    let currentPageNum = 1;
+    let currentPageSize = 10;
+    let currentTotalPages = 1;
+
+    if (response.data && response.data.data && response.data.data.data) {
+      // 嵌套格式: {code, message, data: {data: [...], page, pageSize, total, totalPages, hasNext, hasPrevious}}
+      studentsData = response.data.data.data;
+      total = response.data.data.total || 0;
+      currentPageNum = response.data.data.page || 1;
+      currentPageSize = response.data.data.pageSize || 10;
+      currentTotalPages = response.data.data.totalPages || 1;
+    } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      // 标准格式: {code, message, data: [...], total, page, pageSize, totalPages}
+      studentsData = response.data.data;
+      total = response.data.total || 0;
+      currentPageNum = response.data.page || 1;
+      currentPageSize = response.data.pageSize || 10;
+      currentTotalPages = response.data.totalPages || 1;
+    } else if (Array.isArray(response.data)) {
+      // 直接返回数组
+      studentsData = response.data;
+      total = studentsData.length;
+    } else {
+      console.error("未知的响应数据格式:", response.data);
+      ElMessage.error("数据格式错误");
+      return;
+    }
+
+    // 更新分页信息
+    totalStudents.value = total;
+    totalPages.value = currentTotalPages;
+
+    // 确保studentsData是数组
+    if (!Array.isArray(studentsData)) {
+      console.error("学生数据不是数组:", studentsData);
+      ElMessage.error("学生数据格式错误");
+      return;
+    }
+
+    // 使用 dataProcessor 处理数据转换
+    const transformedData = dataProcessor.transformBackendData(studentsData, weekDays.value);
+    attendanceData.value = transformedData;
+  } catch (error) {
+    ElMessage.error("获取学生请假数据失败");
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 修改周期时间处理逻辑
+const handleWeekChange = () => {
+  if (selectedClass.value) {
+    currentPage.value = 1;
+    loadAttendanceData();
+  }
+};
+
+// 单个学生更新处理
+const processBatchUpdates = debounce(async () => {
+  if (updateQueue.value.size === 0) return;
+
+  const updates = Array.from(updateQueue.value.values());
+  updateQueue.value.clear();
+
+  try {
+    // 为每个更新发送单独的请求
+    const promises = updates.map(async ({ student, date, fields, status }) => {
+      const requests = fields.map((backendField) => {
+        if (!backendField || !status) return null;
+        const requestData = {
+          studentId: student.studentId,
+          classId: (selectedClass.value as ClassInfo).id,
+          field: backendField,
+          status: status,
+          week: selectedWeek.value,
+          
+        };
+        console.log("发送请求数据:", requestData);
+        return AttendanceApi.updateAttendance(requestData);
+      });
+      return Promise.all(requests.filter((p) => p !== null));
+    });
+
+    await Promise.all(promises.flat());
+    ElMessage.success(`更新成功`);
+  } catch (error) {
+    ElMessage.error("更新失败");
+    console.error(error);
+  }
+}, 300);
+
+// 更新考情状态
+const updateAttendance = async (
+  student: Student,
+  date: string,
+  period: string,
+  status: string
+) => {
+  // 1. 立即更新UI
+  const studentToUpdate = attendanceData.value.find(
+    (s) => s.studentId === student.studentId
+  );
+  if (studentToUpdate) {
+    const tempAttendance = { ...studentToUpdate.attendance };
+    tempAttendance[`${date}-${period}`] = status;
+    studentToUpdate.attendance = tempAttendance;
+  }
+
+  // 2. 添加到批量更新队列（转成后端字段）
+  const fields = [dataProcessor.getBackendFieldName(date, period, weekDays.value)].filter((f): f is string => !!f);
+  const updateKey = `${student.studentId}-${date}-${period}`;
+  updateQueue.value.set(updateKey, { student, date, fields, status });
+
+  // 3. 处理批量更新
+  processBatchUpdates();
+};
+
+// 批量更新
+const batchUpdate = () => {
+  if (!attendanceData.value.length) {
+    ElMessage.warning("没有学生数据");
+    return;
+  }
+  batchDialogVisible.value = true;
+};
+
+// 确定批量更新逻辑
+const confirmBatchUpdate = async () => {
+  if (
+    !batchForm.studentIds.length ||
+    !batchForm.dateRange.length ||
+    !batchForm.periods.length ||
+    !batchForm.status
+  ) {
+    ElMessage.warning("请填写完整的批量修改信息");
+    return;
+  }
+
+  try {
+    // 1) 按所选日期范围生成日期数组（含首尾）
+    const [startStr, endStr] = batchForm.dateRange;
+    const startDate = new Date(startStr);
+    const endDate = new Date(endStr);
+    const dateList: string[] = [];
+    for (
+      let d = new Date(startDate.getTime());
+      d.getTime() <= endDate.getTime();
+      d.setDate(d.getDate() + 1)
+    ) {
+      dateList.push(d.toISOString().split("T")[0]);
+    }
+
+    // 2) 生成后端需要的字段名列表 field（去重）
+    const fieldSet = new Set<string>();
+    dateList.forEach((date) => {
+      batchForm.periods.forEach((p) => {
+        const f = dataProcessor.getBackendFieldName(date, p, weekDays.value);
+        if (f) fieldSet.add(f);
+      });
+    });
+    const field = Array.from(fieldSet);
+
+    await AttendanceApi.batchUpdate({
+      classId: selectedClass.value?.id as number,
+      week: selectedWeek.value,
+      studentIds: batchForm.studentIds,
+      dateRange: batchForm.dateRange,
+      field,
+      status: batchForm.status,
+    });
+    ElMessage.success("批量修改成功");
+    batchDialogVisible.value = false;
+    currentPage.value = 1;
+    await loadAttendanceData();
+  } catch (error) {
+    ElMessage.error("批量修改失败");
+    console.error(error);
+  }
+};
+
+// 导出单个班级考勤表
+const exportAttendance = async () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+
+  try {
+    const response = await AttendanceApi.exportClass({
+      classId: selectedClass.value.id,
+      week: selectedWeek.value,
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `${selectedClass.value.name}_${selectedWeek.value}_考勤表.xlsx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    ElMessage.success("导出成功");
+  } catch (error) {
+    ElMessage.error("导出失败");
+    console.error(error);
+  }
+};
+
+// 导出所有考勤表
+const exportAllAttendance = async () => {
+  if (!selectedWeek.value) {
+    ElMessage.warning("请先选择日期");
+    return;
+  }
+
+  try {
+    const response = await AttendanceApi.exportAll({
+      week: selectedWeek.value,
+      format: "xlsx",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `全部班级_${selectedWeek.value}_考勤表.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    ElMessage.success("导出全部考勤表成功");
+  } catch (error) {
+    ElMessage.error("导出全部考勤表失败");
+    console.error(error);
+  }
+};
+
+// 导出异常：全部班级
+const exportProblemSummaryAll = async () => {
+  if (!selectedWeek.value) {
+    ElMessage.warning("请先选择日期");
+    return;
+  }
+  try {
+    const response = await AttendanceApi.exportProblemSummaryAll({
+      week: selectedWeek.value,
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `异常汇总_全部_${selectedWeek.value}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    ElMessage.success("导出异常汇总(全部)成功");
+  } catch (error) {
+    ElMessage.error("导出异常汇总(全部)失败");
+    console.error(error);
+  }
+};
+
+// 导出异常：单个班级
+const exportProblemSummary = async () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+  try {
+    const response = await AttendanceApi.exportProblemSummary({
+      classId: selectedClass.value.id,
+      week: selectedWeek.value,
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `异常汇总_${selectedClass.value.name}_${selectedWeek.value}.xlsx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    ElMessage.success("导出异常汇总成功");
+  } catch (error) {
+    ElMessage.error("导出异常汇总失败");
+    console.error(error);
+  }
+};
+// 新增班级相关方法
+const showAddClassDialog = () => {
+  addClassDialogVisible.value = true;
+  // 重置表单
+  Object.assign(addClassForm, {
+    name: "",
+  });
+};
+
+// 确定添加班级
+const confirmAddClass = async () => {
+  if (!addClassFormRef.value) return;
+
+  try {
+    await addClassFormRef.value.validate();
+
+    const response = await AttendanceApi.createClass(addClassForm);
+
+    if (response.data.code === 200) {
+      ElMessage.success("班级创建成功");
+      addClassDialogVisible.value = false;
+      await refreshClasses();
+    } else {
+      ElMessage.error(response.data.message || "创建失败");
+    }
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message);
+    } else {
+      ElMessage.error("创建失败");
+    }
+    console.error(error);
+  }
+};
+
+// 新增学生相关方法
+const showAddStudentDialog = () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+
+  addStudentDialogVisible.value = true;
+  // 重置表单
+  Object.assign(addStudentForm, {
+    studentId: "",
+    name: "",
+  });
+};
+
+// 导入学生
+const showImportStudentsDialog = () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+  importStudentsDialogVisible.value = true;
+  Object.assign(importStudentsForm, { rawText: "" });
+};
+
+// 确定导入班级
+const confirmImportStudents = async () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+  const namesText = importStudentsForm.rawText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join("\n");
+  if (!namesText) {
+    ElMessage.warning("请输入要导入的学生名单");
+    return;
+  }
+
+  try {
+    const payload = {
+      classId: selectedClass.value.id,
+      namesText,
+    };
+    const resp = await AttendanceApi.importStudents(payload);
+    if (resp.data?.code === 200) {
+      ElMessage.success("导入成功");
+      importStudentsDialogVisible.value = false;
+      currentPage.value = 1;
+      await loadAttendanceData();
+      await refreshClasses();
+    } else {
+      ElMessage.error(resp.data?.message || "导入失败");
+    }
+  } catch (e) {
+    ElMessage.error("导入失败");
+    console.error(e);
+  }
+};
+
+// 确定添加学生
+const confirmAddStudent = async () => {
+  if (!addStudentFormRef.value || !selectedClass.value) return;
+
+  try {
+    await addStudentFormRef.value.validate();
+
+    const response = await AttendanceApi.createStudent({
+      studentId: addStudentForm.studentId,
+      studentName: addStudentForm.name,
+      classId: selectedClass.value.id,
+    });
+
+    if (response.data.code === 200) {
+      ElMessage.success("学生添加成功");
+      addStudentDialogVisible.value = false;
+      currentPage.value = 1;
+      await loadAttendanceData();
+      await refreshClasses(); // 更新班级学生数量
+    } else {
+      ElMessage.error(response.data.message || "添加失败");
+    }
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message);
+    } else {
+      ElMessage.error("添加失败");
+    }
+    console.error(error);
+  }
+};
+
+// 班级选择相关方法
+const toggleClassSelection = (classId: number) => {
+  const index = selectedClassIds.value.indexOf(classId);
+  if (index > -1) {
+    selectedClassIds.value.splice(index, 1);
+  } else {
+    selectedClassIds.value.push(classId);
+  }
+};
+
+// 选择删除班级
+const showDeleteClassDialog = () => {
+  if (selectedClassIds.value.length === 0) {
+    ElMessage.warning("请先选择要删除的班级");
+    return;
+  }
+  deleteClassDialogVisible.value = true;
+};
+
+// 确定删除班级
+const confirmDeleteClasses = async () => {
+  try {
+    const classIds = selectedClassIds.value.join("&");
+    const response = await AttendanceApi.deleteClasses({ classIds });
+
+    if (response.data.code === 200) {
+      ElMessage.success(response.data.data.message);
+      deleteClassDialogVisible.value = false;
+      selectedClassIds.value = [];
+      await refreshClasses();
+      // 如果当前选中的班级被删除了，清空选择
+      if (
+        selectedClass.value &&
+        selectedClassIds.value.includes(selectedClass.value.id)
+      ) {
+        selectedClass.value = null;
+        attendanceData.value = [];
+      }
+    } else {
+      ElMessage.error(response.data.message || "删除失败");
+    }
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message);
+    } else {
+      ElMessage.error("删除失败");
+    }
+    console.error(error);
+  }
+};
+
+// 学生选择相关方法
+const handleStudentSelectionChange = (selection: Student[]) => {
+  selectedStudentIds.value = selection.map((student) => student.studentId);
+};
+
+// 显示删除学生对话框
+const showDeleteStudentDialog = () => {
+  if (selectedStudentIds.value.length === 0) {
+    ElMessage.warning("请先选择要删除的学生");
+    return;
+  }
+  deleteStudentDialogVisible.value = true;
+};
+
+// 确定删除学生
+const confirmDeleteStudents = async () => {
+  if (!selectedClass.value) {
+    ElMessage.warning("请先选择班级");
+    return;
+  }
+
+  try {
+    const studentIds = selectedStudentIds.value.join("&");
+    const response = await AttendanceApi.deleteStudents({
+      classId: selectedClass.value.id,
+      studentIds,
+    });
+
+    if (response.data.code === 200) {
+      ElMessage.success(response.data.data.message);
+      deleteStudentDialogVisible.value = false;
+      selectedStudentIds.value = [];
+      currentPage.value = 1;
+      await loadAttendanceData();
+      await refreshClasses(); // 更新班级学生数量
+    } else {
+      ElMessage.error(response.data.message || "删除失败");
+    }
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message);
+    } else {
+      ElMessage.error("删除失败");
+    }
+    console.error(error);
+  }
+};
+
+// 数据库管理相关方法
+const showDbManagementDialog = () => {
+  dbManagementDialogVisible.value = true;
+};
+
+const downloadDatabase = async () => {
+  try {
+    const response = await AttendanceApi.downloadDatabase();
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "database_backup.db");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    ElMessage.success("数据库下载成功");
+  } catch (error) {
+    ElMessage.error("数据库下载失败");
+    console.error(error);
+  }
+};
+
+const uploadDatabase = () => {
+  dbFileInputRef.value?.click();
+};
+
+const handleDatabaseUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const files = target.files;
+  if (!files || files.length === 0) return;
+
+  try {
+    await AttendanceApi.uploadDatabase(Array.from(files));
+    ElMessage.success("数据库上传成功");
+    // 刷新数据
+    await refreshClasses();
+    if (selectedClass.value) {
+      await loadAttendanceData();
+    }
+  } catch (error) {
+    ElMessage.error("数据库上传失败");
+    console.error(error);
+  }
+};
+
+// 初始化
+onMounted(() => {
+  // 设置默认日期为当前日期
+  const today = new Date();
+  selectedWeek.value = today.toISOString().split("T")[0];
+
+  refreshClasses();
+});
+</script>
+
+

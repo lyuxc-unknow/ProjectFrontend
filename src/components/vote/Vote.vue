@@ -1,8 +1,8 @@
 <template>
   <div class="p-6 max-w-lg mx-auto space-y-6" style="display: flex;flex-direction: column;">
-    <div style="display: flex;flex-direction: row;width: 1000px;">
+    <div style="display: flex;flex-direction: row;">
       <!-- 1️⃣ 选择投票 -->
-      <el-card style="width: 20%;" shadow="hover">
+      <el-card style="width: 300px;" shadow="hover">
         <h2 class="text-xl font-bold mb-4">请选择投票</h2>
         <el-select v-model="selectedPollId" placeholder="选择投票" @change="loadPoll" clearable style="width: 100%;">
           <el-option v-for="pollItem in polls" :key="pollItem.id ?? pollItem.title" :label="pollItem.title"
@@ -11,7 +11,7 @@
       </el-card>
 
       <!-- 2️⃣ 投票选项 -->
-      <el-card style="width: 80%;" v-if="poll" shadow="hover">
+      <el-card style="width: 600px;" v-if="poll" shadow="hover">
         <h2 class="text-xl font-bold mb-4">{{ poll.title }}</h2>
 
         <el-radio-group v-model="selectedOptionId" class="flex flex-col space-y-3" v-if="poll?.options?.length">

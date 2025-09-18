@@ -1,0 +1,195 @@
+.attendance-container {
+  height: 94vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+.header-card {
+  margin-bottom: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  margin: 0;
+  color: #303133;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attendance-row {
+  flex: 1;
+  height: 0;
+}
+
+.class-card {
+  height: 99%;
+}
+
+.attendance-card {
+  height: 99%;
+  display: flex;
+  flex-direction: column;
+}
+
+.attendance-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.class-list {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.class-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.class-item:hover {
+  border-color: #409eff;
+  background-color: #f0f9ff;
+}
+
+.class-item.active {
+  border-color: #409eff;
+  background-color: #e6f7ff;
+}
+
+.class-name {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.class-info {
+  font-size: 12px;
+  color: #909399;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 按钮样式 */
+.action-btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 80px;
+  height: 32px;
+  font-size: 12px;
+  border: none;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 特定按钮颜色样式 */
+.action-btn.el-button--success { background-color: #67c23a; color: white; }
+.action-btn.el-button--danger { background-color: #f56c6c; color: white; }
+.action-btn.el-button--primary { background-color: #409eff; color: white; }
+.action-btn.el-button--info { background-color: #909399; color: white; }
+.action-btn.el-button--warning { background-color: #e6a23c; color: white; }
+
+/* 禁用按钮样式 */
+.action-btn:disabled {
+  background-color: #c0c4cc !important;
+  color: #ffffff !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.action-btn:disabled:hover { transform: none; box-shadow: none; }
+
+/* 班级列表按钮样式 */
+.class-card .header-actions { flex-direction: row; align-items: center; justify-content: flex-start; }
+.class-card .header-actions .action-btn { flex: 1; min-width: 60px; margin: 0 2px; }
+
+/* 学生管理按钮样式 */
+.attendance-card .header-actions { flex-direction: row; align-items: center; justify-content: flex-start; }
+.attendance-card .header-actions .action-btn { flex: 1; min-width: 60px; margin: 0 2px; }
+
+.schedule-table { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.table-wrapper { flex: 1; border-radius: 6px; border: 1px solid #e4e7ed; }
+.schedule-table .el-table { border-radius: 6px; height: auto !important; }
+
+/* 需要 :deep 作用域的样式留在 SFC 内保留 */
+
+/* 分页组件样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 15px 0;
+  border-top: 1px solid #e4e7ed;
+  background-color: #fafafa;
+  flex-shrink: 0;
+  height: 60px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  min-height: 60px;
+}
+
+/* 班级选择样式 */
+.class-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.class-item.selected { border-color: #f56c6c; background-color: #fef0f0; }
+.class-item.selected .class-name { color: #f56c6c; }
+
+/* 删除警告对话框样式 */
+.delete-warning { display: flex; align-items: flex-start; gap: 16px; padding: 20px; background-color: #fef0f0; border-radius: 8px; border: 1px solid #fbc4c4; }
+.warning-icon { font-size: 24px; color: #f56c6c; margin-top: 4px; }
+.warning-content h4 { margin: 0 0 12px 0; color: #f56c6c; font-size: 16px; }
+.warning-content p { margin: 8px 0; color: #606266; font-size: 14px; }
+.warning-content ul { margin: 8px 0; padding-left: 20px; color: #606266; font-size: 14px; }
+.warning-content li { margin: 4px 0; }
+.danger-text { color: #f56c6c !important; font-weight: bold; margin-top: 12px !important; }
+
+/* 日期头部样式 */
+.day-header { text-align: center; line-height: 1.2; }
+.day-name { font-weight: bold; font-size: 12px; color: #303133; margin-bottom: 2px; }
+.day-date { font-size: 11px; color: #909399; }
+
+/* 数据库管理对话框样式 */
+.db-management-dialog { padding: 20px; }
+.db-options { display: flex; flex-direction: column; gap: 20px; }
+.db-option-btn { width: 100%; font-size: 16px; padding: 15px 20px; }
+.db-option-btn .el-icon { margin-right: 8px; font-size: 18px; }
+.import-section { text-align: center; }
+.import-tip { font-size: 12px; color: #909399; margin-top: 10px; }
+
+/* 响应式设计 */
+@media (max-width: 1000px) {
+  .attendance-container { padding: 1px; }
+}
+
+
